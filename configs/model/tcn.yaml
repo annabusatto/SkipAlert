@@ -1,0 +1,9 @@
+name: tcn
+params:
+  lr: 3e-4
+  loss_type: nll
+  huber_delta: 10.0
+  backbone:
+    base: 64        # was base_channels
+    layers: 6       # 1,2,4,8,16,32 dilations
+    k: 3            # was kernel_size

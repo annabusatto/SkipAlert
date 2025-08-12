@@ -1,0 +1,2 @@
+type: nll
+# no extra params needed – the LightningModule picks this up

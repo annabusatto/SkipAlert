@@ -1,0 +1,5 @@
+# configs/paths/default.yaml
+base: ${oc.env:RUNS_DIR, ${hydra:runtime.cwd}/resources}
+run_dir: ${paths.base}/${model.name}_${now:%Y%m%d_%H%M%S}
+ckpt_dir: ${paths.run_dir}/checkpoints
+ckpt_name: "${model.name}-{epoch:02d}-{val_mae:.3f}"   # nice filenames

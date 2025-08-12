@@ -1,0 +1,8 @@
+data_dir: ${data.beats.data_dir}
+split_dir: ${data.beats.split_dir}
+
+batch_size: 16
+num_workers: 0   # single worker for deterministic behaviour
+
+# Hydra allows overrides, but we'll hard-code a tiny subsample:
+_override_: true        # (optional flag if you want Hydra 1.3 strict mode)

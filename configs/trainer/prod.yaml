@@ -1,0 +1,7 @@
+defaults:
+  - override /trainer: default
+
+epochs: 150
+precision: 16-mixed    # AMP
+accumulate_grad_batches: 2
+gradient_clip_val: 0.5

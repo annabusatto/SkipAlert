@@ -1,0 +1,9 @@
+name: wave_cnn
+params:
+  lr: 3e-4
+  loss_type: nll
+  huber_delta: 10.0
+  backbone:
+    base: 64
+    dilations: [1, 2, 4, 8, 16, 32]
+    k: 3

@@ -1,0 +1,22 @@
+#------------------------------------------------------------------------------
+#  Root Hydra config : choose one file from each group below
+#------------------------------------------------------------------------------
+defaults:
+  - model: resnet
+  - data: beats
+  - split: fixed
+  - trainer: default
+  - loss: nll
+  - wandb: default
+  - augment: default
+  - callbacks: scatter
+  - paths: default
+  - _self_
+
+#--------------------------------------------------------------------------
+#  Global miscellany
+#--------------------------------------------------------------------------
+seed: 42
+
+# a unique run-name is nice for wandb & checkpoints
+run_name: ${model.name}_${split.name}_${now:%Y-%m-%d_%H-%M-%S}

@@ -1,0 +1,4 @@
+epochs: 50
+gpus: 1
+precision: 32
+gradient_clip_val: 1.0

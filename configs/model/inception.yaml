@@ -1,0 +1,9 @@
+name: inception
+params:
+  lr: 3e-4
+  loss_type: nll
+  huber_delta: 10.0
+  backbone:
+    branch_channels: 32   # channels per branch
+    n_blocks: 6
+    # optional: ks: [10, 20, 40]   # if you exposed kernel sizes in your block

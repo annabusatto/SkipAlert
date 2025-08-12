@@ -1,0 +1,10 @@
+# configs/model/resnet.yaml
+name: resnet
+params:
+  lr: 3e-4
+  loss_type: nll
+  huber_delta: 10.0
+  backbone:
+    base: 64          # was base_channels
+    n_blocks: 3
+    k: 7              # was kernel_size

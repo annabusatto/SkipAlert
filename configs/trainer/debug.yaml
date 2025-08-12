@@ -1,0 +1,6 @@
+defaults:
+  - override /trainer: default
+
+epochs: 1
+fast_dev_run: true
+gpus: 0

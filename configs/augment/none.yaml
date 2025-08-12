@@ -1,0 +1,1 @@
+pipeline: none            # dataset will skip augmentations

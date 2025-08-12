@@ -1,0 +1,4 @@
+# Enable with callbacks=scatter
+_target_: pvc.callbacks.ScatterLogger
+every_n_val_epochs: 1     # <- change to 5 if you have thousands of beats
+

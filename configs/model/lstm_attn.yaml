@@ -1,0 +1,11 @@
+name: lstm_attn
+params:
+  lr: 3e-4
+  loss_type: nll          # or huber
+  huber_delta: 10.0
+  backbone:
+    hidden: 128
+    n_layers: 2
+    dropout_lstm: 0.30
+    dropout_head: 0.20
+    bidirectional: true

@@ -1,0 +1,10 @@
+name: tst
+params:
+  lr: 1e-4
+  loss_type: nll
+  huber_delta: 10.0
+  backbone:
+    d_model: 64
+    nhead: 4
+    nlayers: 4
+    dropout: 0.1

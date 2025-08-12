@@ -1,0 +1,11 @@
+name: conv_attn
+params:
+  lr: 3e-4
+  loss_type: nll         # or "huber"
+  huber_delta: 10.0
+  backbone:
+    base: 64
+    n_blocks: 4
+    k: 7
+    dropout: 0.10
+    stem_k: 1            # 1x1 lead-mixing; set 3/5 if you want slight temporal smoothing

@@ -1,0 +1,9 @@
+# No paths here anymore
+batch_size: 512
+num_workers: 14
+pin_memory: true
+adj_path: ${oc.env:PVC_ADJ_PATH, ${hydra:runtime.cwd}/resources/adjacency_matrix_tensor.pt}
+
+# (optional) label scaling
+target_unit: s        # or "ms" or "samples"
+sample_rate: null     # Hz, only used if target_unit == "samples"
