@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from torch.nn.utils.rnn import pack_padded_sequence, pad_packed_sequence
 
 class _AttnPool(nn.Module):
     """Additive attention over time axis for sequences [B, T, D]."""
@@ -9,19 +10,24 @@ class _AttnPool(nn.Module):
         self.score = nn.Linear(d_model, 1)
 
     def forward(self, x: torch.Tensor, mask: torch.Tensor | None = None) -> torch.Tensor:
-        # x: [B, T, D]
-        logits = self.score(x).squeeze(-1)  # [B, T]
+        # x: [B, T, D], mask: [B, T] (True = valid)
+        logits = self.score(x).squeeze(-1)        # [B, T]
         if mask is not None:
             logits = logits.masked_fill(~mask, -1e9)
-        w = torch.softmax(logits, dim=1)    # [B, T]
-        return (w.unsqueeze(-1) * x).sum(dim=1)  # [B, D]
+        w = torch.softmax(logits, dim=1)          # [B, T]
+        return (w.unsqueeze(-1) * x).sum(dim=1)   # [B, D]
 
 
 class BiLSTMAttnBackbone(nn.Module):
     """
-    Bidirectional LSTM + attention backbone.
+    Bidirectional LSTM + attention backbone (variable-length aware).
 
-    Expects input x: [B, 247, L] (L typically 430). Returns features: [B, 2*hidden].
+    Expects:
+      x:    [B, 247, L]
+      mask: [B, L] bool (True = valid), optional
+
+    Returns:
+      z: [B, 2*hidden]
     """
     out_channels: int
 
@@ -46,7 +52,7 @@ class BiLSTMAttnBackbone(nn.Module):
             num_layers=n_layers,
             dropout=dropout_lstm if n_layers > 1 else 0.0,
             bidirectional=bidirectional,
-            batch_first=True,   # we will feed [B, T, D]
+            batch_first=True,   # we feed [B, T, D]
         )
         self.pool = _AttnPool(d_out)
         self.norm = nn.LayerNorm(d_out)
@@ -54,17 +60,35 @@ class BiLSTMAttnBackbone(nn.Module):
 
         self.out_channels = d_out
 
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
+    @staticmethod
+    def _lengths_from_mask(mask: torch.Tensor) -> torch.Tensor:
+        # mask: [B, T] (True=valid) → lengths on CPU int64
+        return mask.sum(dim=1).to(dtype=torch.long).cpu()
+
+    def forward(self, x: torch.Tensor, mask: torch.Tensor | None = None) -> torch.Tensor:
         """
-        x: [B, 247, L]  -> permute to [B, L, 247] for LSTM over time.
-        Returns: [B, out_channels]
+        x: [B, 247, L]  -> LSTM expects [B, T, D] = [B, L, 247]
+        mask: [B, L] (optional). If None, uses all timesteps.
         """
-        # to sequence-first for LSTM
+        # To sequence-first for LSTM
         x = x.transpose(1, 2)  # [B, L, 247]
-        # If you ever pass variable lengths, add a mask here; with fixed L we use all-True.
-        y, _ = self.lstm(x)    # [B, L, 2H]
-        # optional mask = torch.ones(y.size(0), y.size(1), dtype=torch.bool, device=y.device)
-        z = self.pool(y, mask=None)   # [B, 2H]
+        B, T, _ = x.shape
+
+        if mask is not None:
+            # Efficiently skip padded tail inside the LSTM
+            lengths = self._lengths_from_mask(mask)
+            # pack -> LSTM -> unpack (keeps batch_first)
+            packed = pack_padded_sequence(x, lengths, batch_first=True, enforce_sorted=False)
+            packed_out, _ = self.lstm(packed)
+            y, _ = pad_packed_sequence(packed_out, batch_first=True, total_length=T)  # [B, T, 2H]
+            # Attention with the same mask (True = valid)
+            z = self.pool(y, mask=mask)
+        else:
+            # Fixed-length (or already-trimmed) path
+            y, _ = self.lstm(x)                 # [B, L, 2H]
+            # All timesteps valid
+            z = self.pool(y, mask=None)
+
         z = self.norm(z)
         z = self.dropout(z)
         return z

@@ -1,0 +1,17 @@
+# configs/model/resnet_seq.yaml
+defaults:
+  - model: resnet
+  - _self_
+
+name: resnet_seq
+params:
+  task: regression
+  lr: 3e-4
+  backbone:
+    base: 64
+    n_blocks: 4
+    k: 7
+  seq_wrap:
+    enabled: true
+    agg: attn         # or mean
+    attn_dropout: 0.1

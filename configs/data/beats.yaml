@@ -6,4 +6,6 @@ adj_path: ${oc.env:PVC_ADJ_PATH, ${hydra:runtime.cwd}/resources/adjacency_matrix
 
 # (optional) label scaling
 target_unit: s        # or "ms" or "samples"
-sample_rate: null     # Hz, only used if target_unit == "samples"
+variable_length: true         # if false, you can still force-resample to 430 in the dataset
+pad_value: 0.0
+max_len: null

@@ -1,7 +1,7 @@
 name: loo
 fold: 0
 data_dir:  ${oc.env:DATA_DIR,  ${hydra:runtime.cwd}/data/beats}
-split_dir: ${oc.env:SPLIT_DIR, ${hydra:runtime.cwd}/data/splits/loo}
+split_dir: ${oc.env:SPLIT_DIR, ${hydra:runtime.cwd}/data/splits/single/loo}
 train_file: fold_${.fold}_train.json
 val_file:   fold_${.fold}_val.json
 test_file:  fold_${.fold}_test.json

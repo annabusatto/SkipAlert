@@ -1,0 +1,10 @@
+# common defaults applied to all models unless overridden
+params:
+  lr: 3e-4
+  loss_type: nll
+  huber_delta: 10.0
+
+  # --- classification switches ---
+  task: regression          # regression | classification
+  cls_window_s: 180         # 3 minutes
+  # cls_pos_weight: null      # e.g., 2.0 if positives are rare

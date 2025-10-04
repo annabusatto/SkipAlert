@@ -4,6 +4,7 @@ import lightning as L
 from pathlib import Path
 from torch.utils.data import DataLoader
 from pvc.datasets.beat_dataset import BeatDataset
+from pvc.datasets.collate import pad_collate
 
 
 class BeatDataModule(L.LightningDataModule):
@@ -26,7 +27,6 @@ class BeatDataModule(L.LightningDataModule):
             file_list,
             augment=augment,
             target_unit=self.hparams.get("target_unit", "s"),
-            sample_rate=self.hparams.get("sample_rate", None),
             adj_path=self.hparams.get("adj_path", None),
         )
 
@@ -48,7 +48,8 @@ class BeatDataModule(L.LightningDataModule):
                           shuffle=True,
                           num_workers=self.hparams.num_workers,
                           pin_memory=self.hparams.pin_memory,
-                          persistent_workers=self.hparams.num_workers > 0)
+                          persistent_workers=self.hparams.num_workers > 0,
+                          collate_fn=pad_collate)
 
     def val_dataloader(self):
         return DataLoader(self.val_ds,
@@ -56,7 +57,8 @@ class BeatDataModule(L.LightningDataModule):
                           shuffle=False,
                           num_workers=self.hparams.num_workers,
                           pin_memory=self.hparams.pin_memory,
-                          persistent_workers=self.hparams.num_workers > 0)
+                          persistent_workers=self.hparams.num_workers > 0,
+                          collate_fn=pad_collate)
 
     def test_dataloader(self):
         if hasattr(self, "test_ds"):
@@ -64,4 +66,6 @@ class BeatDataModule(L.LightningDataModule):
                               batch_size=self.hparams.batch_size,
                               shuffle=False,
                               num_workers=self.hparams.num_workers,
-                              pin_memory=self.hparams.pin_memory)
+                              pin_memory=self.hparams.pin_memory,
+                              persistent_workers=self.hparams.num_workers > 0,
+                              collate_fn=pad_collate)

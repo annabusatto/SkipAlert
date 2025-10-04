@@ -19,8 +19,10 @@ Data_old
 .DS_Store
 outputs/
 data/beats/**/*.npy
+data/sequences/**/*.npy
 data/splits/*
 resources/**/*
+results/**/*
 
 _old
 _old/**/*

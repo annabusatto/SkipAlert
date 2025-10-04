@@ -1,0 +1,7 @@
+name: seq_fixed
+beats: 3
+data_dir:  ${oc.env:DATA_DIR,  ${hydra:runtime.cwd}/data/sequences/sequence_len_${.beats}}
+split_dir: ${oc.env:SPLIT_DIR, ${hydra:runtime.cwd}/data/splits/${.beats}beats/fixed}
+train_file: train.json
+val_file:   val.json
+test_file:  test.json

@@ -1,4 +1,9 @@
 name: wave_cnn
+
+defaults:
+  - _base        # load shared defaults first
+  - _self_       # then override with this file
+  
 params:
   lr: 3e-4
   loss_type: nll

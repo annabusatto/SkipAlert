@@ -11,6 +11,7 @@ defaults:
   - augment: default
   - callbacks: scatter
   - paths: default
+  - adapt: default
   - _self_
 
 #--------------------------------------------------------------------------

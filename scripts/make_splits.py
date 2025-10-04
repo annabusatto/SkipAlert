@@ -23,7 +23,7 @@ def write_json(path: Path, rows):
     path.parent.mkdir(parents=True, exist_ok=True)
     with open(path, "w") as f:
         json.dump(rows, f)
-    print(f"{path}  ←  {len(rows):6d} beats")
+    print(f"{path}  ←  {len(rows):6d} sequences")
 
 def per_experiment_train_val(groups_subset, seed, p_val=0.10):
     rnd = random.Random(seed)
@@ -94,9 +94,9 @@ def make_loo_adapt(groups, out_dir: Path, seed: int, val_pct: float, adapt_pct: 
         train_groups = {e: groups[e] for e in exps if e != held}
         tr, va = per_experiment_train_val(train_groups, seed=hash((seed, k)), p_val=val_pct)
         # held-out adapt/test
-        rnd = random.Random(hash((seed, "adapt", k)))
+        # rnd = random.Random(hash((seed, "adapt", k)))
         b = groups[held][:]
-        rnd.shuffle(b)
+        # rnd.shuffle(b)
         n_adapt = max(1, ceil(len(b) * adapt_pct)) if b else 0
         adapt = b[:n_adapt]
         test  = b[n_adapt:]
@@ -132,3 +132,5 @@ if __name__ == "__main__":
         make_kfold(groups, args.out_dir, args.k, args.seed, args.val_mode, args.val_pct)
     else:  # loo_adapt
         make_loo_adapt(groups, args.out_dir, args.seed, args.val_pct, args.adapt_pct)
+
+# python scripts/make_splits.py data/sequences/sequence_len_3 data/splits/3beats/loo_adapt30/ --mode loo_adapt --val-pct 0.10 --adapt-pct 0.30 --seed 42

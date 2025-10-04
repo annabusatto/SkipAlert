@@ -2,6 +2,7 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from ..common import masked_mean_time
 
 def _same_pad_1d(k: int, d: int) -> int:
     # requires odd k; for k=3, returns d
@@ -14,10 +15,11 @@ class GatedResBlock(nn.Module):
         pad = _same_pad_1d(k, d)
         self.f = nn.Conv1d(channels, channels, kernel_size=k, dilation=d, padding=pad)
         self.g = nn.Conv1d(channels, channels, kernel_size=k, dilation=d, padding=pad)
-        # optional: weight norm, dropout, etc.
+        # optional: add dropout/weight norm if desired
 
     def forward(self, x):
-        y = torch.tanh(self.f(x)) * torch.sigmoid(self.g(x))
+        # x: [B, C, L]
+        y = torch.tanh(self.f(x)) * torch.sigmoid(self.g(x))  # [B, C, L’]
         # --- safety net: align time length if off by a couple samples ---
         if y.size(-1) != x.size(-1):
             diff = y.size(-1) - x.size(-1)
@@ -27,18 +29,30 @@ class GatedResBlock(nn.Module):
             else:         # right-pad to length of x
                 r = -diff
                 y = F.pad(y, (r - r // 2, r // 2))
-        return y + x
+        return y + x  # residual
 
 class WaveCNNBackbone(nn.Module):
+    """
+    Dilated gated residual CNN over the time axis with mask-aware global pooling.
+
+    Input:
+      x   : [B, 247, L]
+      mask: [B, L] bool (True=valid), optional
+
+    Output:
+      z   : [B, base]
+    """
     def __init__(self, base=64, dilations=(1, 2, 4, 8, 16, 32), k=3):
         super().__init__()
-        # stem must map 247 leads -> base channels; e.g., 1x1 conv over leads
+        # stem: 247 leads -> base channels (1x1 conv over lead dimension)
         self.stem = nn.Conv1d(247, base, kernel_size=1)
-        blocks = [GatedResBlock(base, k=k, d=d) for d in dilations]
-        self.cnn = nn.Sequential(*blocks, nn.AdaptiveAvgPool1d(1))
+        self.blocks = nn.ModuleList([GatedResBlock(base, k=k, d=d) for d in dilations])
         self.out_channels = base
 
-    def forward(self, x):         # x: [B, 247, 430]
-        x = self.stem(x)          # [B, base, 430]
-        x = self.cnn(x).squeeze(-1)  # [B, base]
-        return x
+    def forward(self, x, mask: torch.Tensor | None = None):
+        # x: [B, 247, L]
+        x = self.stem(x)                      # [B, base, L]
+        for blk in self.blocks:
+            x = blk(x)                        # keep length ~L (safety-align inside block)
+        z = masked_mean_time(x, mask)        # [B, base]
+        return z

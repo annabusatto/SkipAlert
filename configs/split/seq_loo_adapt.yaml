@@ -1,0 +1,12 @@
+# configs/split/seq_loo_adapt.yaml
+name: seq_loo_adapt
+beats: 3
+fold: 0
+fine_tune: 20
+data_dir:  ${oc.env:DATA_DIR,  ${hydra:runtime.cwd}/data/sequences/sequence_len_${.beats}}
+split_dir: ${oc.env:SPLIT_DIR, ${hydra:runtime.cwd}/data/splits/${.beats}beats/loo_adapt${.fine_tune}}
+train_file: fold_${.fold}_train.json
+val_file:   fold_${.fold}_val.json
+adapt_file: fold_${.fold}_adapt.json
+test_file:  fold_${.fold}_test.json
+

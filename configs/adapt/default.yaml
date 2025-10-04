@@ -1,0 +1,11 @@
+# configs/adapt/default.yaml
+# Configuration for model adaptation phase
+
+# Freeze backbone during adaptation - only train the head/classifier
+freeze_backbone: true
+
+# Number of adaptation epochs (can be overridden in cli.py if needed)
+epochs: 20
+
+# Learning rate multiplier for adaptation (relative to original LR)
+lr_multiplier: 0.01

@@ -1,6 +1,6 @@
 name: fixed
 data_dir:  ${oc.env:DATA_DIR,  ${hydra:runtime.cwd}/data/beats}
-split_dir: ${oc.env:SPLIT_DIR, ${hydra:runtime.cwd}/data/splits/fixed}
+split_dir: ${oc.env:SPLIT_DIR, ${hydra:runtime.cwd}/data/splits/single/fixed}
 train_file: train.json
 val_file:   val.json
 test_file:  test.json

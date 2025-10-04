@@ -1,0 +1,12 @@
+# configs/data/sequence.yaml
+kind: sequence          # <— IMPORTANT: tells CLI to use the sequence DM
+batch_size: 512
+num_workers: 14
+pin_memory: true
+adj_path: ${oc.env:PVC_ADJ_PATH, ${hydra:runtime.cwd}/resources/adjacency_matrix_tensor.pt}
+
+# variable-length / memory controls
+pad_value: 0.0
+
+# optional per-sequence augment switch
+use_augment: true

@@ -1,3 +1,4 @@
+# pvc/models/backbones/conv_attn.py
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -32,7 +33,7 @@ class ResidualBlock(nn.Module):
         y = self.conv1(x)
         y = self.drop(y)
         y = self.conv2(y)
-        # length guard (shouldn’t trigger with odd k + same padding):
+        # Defensive guard (shouldn't trigger with odd k)
         if y.size(-1) != x.size(-1):
             L = x.size(-1)
             diff = y.size(-1) - L
@@ -48,24 +49,35 @@ class AttnPool1D(nn.Module):
     """Additive attention over time for feature maps [B, C, L]."""
     def __init__(self, channels: int):
         super().__init__()
-        # 1x1 conv produces a scalar score per time step
         self.score = nn.Conv1d(channels, 1, kernel_size=1, bias=True)
 
     def forward(self, x: torch.Tensor, mask: torch.Tensor | None = None) -> torch.Tensor:
-        # x: [B, C, L]
+        # x: [B, C, L], mask: [B, L] (True=valid) or None
         logits = self.score(x).squeeze(1)  # [B, L]
         if mask is not None:
+            # Defensive alignment if needed
+            if mask.size(1) != logits.size(1):
+                Lx, Lm = logits.size(1), mask.size(1)
+                if Lm > Lx:
+                    off = (Lm - Lx) // 2
+                    mask = mask[:, off:off+Lx]
+                else:
+                    pad = Lx - Lm
+                    mask = F.pad(mask, (pad - pad // 2, pad // 2))
             logits = logits.masked_fill(~mask, -1e9)
         w = torch.softmax(logits, dim=-1)           # [B, L]
-        # weighted sum over time -> [B, C]
-        return (x * w.unsqueeze(1)).sum(dim=-1)
+        return (x * w.unsqueeze(1)).sum(dim=-1)     # [B, C]
 
 class ConvAttnBackbone(nn.Module):
     """
-    Temporal CNN + attention pooling over time.
+    Temporal CNN + attention pooling over time (variable-length aware).
 
-    Input:  [B, 247, L]  (L≈430)
-    Output: [B, out_channels]
+    Input:
+      x   : [B, 247, L]
+      mask: [B, L] bool (True=valid), optional
+
+    Output:
+      z   : [B, out_channels]
     """
     out_channels: int
 
@@ -80,8 +92,8 @@ class ConvAttnBackbone(nn.Module):
         self.stem = ConvBNAct(247, base, k=stem_k if stem_k % 2 == 1 else 1)
 
         # Body: residual temporal conv blocks (stride=1, same length)
-        blocks = [ResidualBlock(base, k=k, dropout=dropout) for _ in range(n_blocks)]
-        self.body = nn.Sequential(*blocks)
+        self.body = nn.Sequential(*[ResidualBlock(base, k=k, dropout=dropout)
+                                    for _ in range(n_blocks)])
 
         # Attention pooling over time -> [B, base]
         self.pool = AttnPool1D(base)
@@ -92,11 +104,11 @@ class ConvAttnBackbone(nn.Module):
 
         self.out_channels = base
 
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
-        # x: [B, 247, L]
+    def forward(self, x: torch.Tensor, mask: torch.Tensor | None = None) -> torch.Tensor:
+        # x: [B, 247, L]; mask: [B, L] or None
         x = self.stem(x)          # [B, base, L]
         x = self.body(x)          # [B, base, L]
-        z = self.pool(x)          # [B, base]
+        z = self.pool(x, mask=mask)  # [B, base]
         z = self.norm(z)
         z = self.post(z)
         return z

@@ -1,0 +1,5 @@
+# Enable with callbacks=confmat
+_target_: pvc.callbacks.confmat_logger.ConfusionMatrixLogger
+every_n_val_epochs: 1     # <- change to 5 if you have thousands of beats
+threshold: 0.5           # if None, uses best val threshold (Youden J)
+
